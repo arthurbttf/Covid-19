@@ -8,39 +8,34 @@ Original file is located at
 
 # Bibliotecas do Projeto
 """
-
-#!pip install geopandas beautifulsoup4 #urllib3[secure]
-import urllib3, urllib.request, json, pandas as pd, geopandas as gpd, plotly.express as px
+import urllib3, urllib.request, json, pandas as pd, geopandas as gpd, plotly.express as px, streamlit as st
 from bs4 import BeautifulSoup
 
-import geopandas as gpd
-import requests
-import zipfile
-import io
+#import requests
+#import zipfile
+#import io
 
-"""tapoha qq isso
+st.set_page_config(layout="wide")
 
-"""
-
-url = 'https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2021/UFs/RN/RN_Municipios_2021.zip'
-local_path = 'tmp/'
-print('Downloading shapefile...')
-r = requests.get(url)
-z = zipfile.ZipFile(io.BytesIO(r.content))
-print("Done")
-z.extractall(path=local_path) # extract to folder
-filenames = [y for y in sorted(z.namelist()) for ending in ['dbf', 'prj', 'shp', 'shx'] if y.endswith(ending)] 
-print(filenames)
-dbf, prj, shp, shx = [filename for filename in filenames]
-usa = gpd.read_file(local_path + shp)
-print("Shape of the dataframe: {}".format(usa.shape))
-print("Projection of dataframe: {}".format(usa.crs))
-usa.tail() #last 5 records in dataframe
-usa.loc[91,'NM_MUN'] = "Olho-d'Água do Borges"
-usa.loc[58,'NM_MUN'] = "Boa Saúde"
-usa.loc[usa['NM_MUN'].str.contains('Cicco', case=False)]
-
-"""### classes"""
+#def outra_geometria():
+ #   url = 'https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2021/UFs/RN/RN_Municipios_2021.zip'
+#    local_path = 'tmp/'
+#    print('Downloading shapefile...')
+#    r = requests.get(url)
+#    z = zipfile.ZipFile(io.BytesIO(r.content))
+#    print("Done")
+#    z.extractall(path=local_path) # extract to folder
+#    filenames = [y for y in sorted(z.namelist()) for ending in ['dbf', 'prj', 'shp', 'shx'] if y.endswith(ending)] 
+#    print(filenames)
+#    dbf, prj, shp, shx = [filename for filename in filenames]
+#    usa = gpd.read_file(local_path + shp)
+#    print("Shape of the dataframe: {}".format(usa.shape))
+#    print("Projection of dataframe: {}".format(usa.crs))
+#    usa.tail() #last 5 records in dataframe
+#   usa.loc[91,'NM_MUN'] = "Olho-d'Água do Borges"
+#    usa.loc[58,'NM_MUN'] = "Boa Saúde"
+#    return usa
+    #usa.loc[usa['NM_MUN'].str.contains('Cicco', case=False)]
 
 class Faixa:
     #recebe qual dos dataframes eu desejo escolher e quais as colunas eu quero para poder iniciar o dataframe
@@ -155,29 +150,21 @@ class WebScraping(Media100mil):
         self.dataframe[column] = self.dataframe[column].str.replace("\s+","")
         self.dataframe[column] = self.dataframe[column].astype(int)
 
-"""
-
-### Criando o dataframe para as mortes por faixa etária"""
 
 faixa_etaria = Faixa('obitos','fx_etaria','total');
 faixa_etaria.get().columns = ['faixa etaria', 'obitos']
 faixa_etaria.agrupar('faixa etaria')
-faixa_etaria.get().head()
+#st.write(faixa_etaria.get().head())
 
-"""### Criando o dataframe para as médias móveis de mortes e casos diário"""
 
 #fazendo dataframe apenas com data e casos confirmados
 casos_diarios = Faixa('municipios','data','confirmados')
 casos_diarios.get().columns = ['data','casos confirmados']
 
-#display existe, caso contrário n imprime os dois
-display(casos_diarios.get().head())
-
 #fazendo dataframe apenas com data e obitos
 obitos_diarios = Faixa('municipios','data','obitos')
-obitos_diarios.get().head()
 
-"""### Web scraping para obter população por município"""
+
 
 populacao = WebScraping();
 
@@ -203,9 +190,8 @@ populacao.replace(18,'Municipio', 'Brejinho')
 populacao.replace(96,'Municipio', 'Passa e Fica')
 populacao.replace(133,'Municipio', 'São Bento do Trairí')
 
-populacao.get().head()
+#st.write(populacao.get().head())
 
-"""### Criando o dataframe para médias de mortes por 100 mil habitantes no RN"""
 
 #fazendo dataframe apenas com municipio e casos confirmados
 cemMil = Media100mil('municipios','mun_residencia','obitos')
@@ -226,63 +212,66 @@ cemMil.createColumnMedia('Mortes por 100 mil','obitos',populacao.get(),'Populaca
 print(cemMil.find('Municipio','caiada'))
 #cemMil.get().head()
 
-"""## Média móvel de novos casos diários"""
+st.title('Projeto POO - Covid-19')
+st.write('Neste projeto, foi feita a análise de dados de Covid-19 no Rio Grande do Norte e organizados em gráficos para melhor visualização.')
 
-fig = px.line(casos_diarios.rollingGet('data',3), x='data', y='casos confirmados',title='Média móvel 3 dias')
-fig.show()
+st.title('Óbitos por faixa etária')
 
-fig = px.line(casos_diarios.rollingGet('data',7), x='data', y='casos confirmados',title='Média móvel 7 dias')
-fig.show()
+fig = px.bar(faixa_etaria.get(), x='faixa etaria', y='obitos',title='')
 
-fig = px.line(casos_diarios.rollingGet('data',15), x='data', y='casos confirmados',title='Média móvel 15 dias')
-fig.show()
-
-"""# Média movel de óbitos diários"""
-
-fig = px.line(obitos_diarios.rollingGet('data',3), x='data', y='obitos',title='Média móvel 3 dias')
-fig.show()
-    
-fig = px.line(obitos_diarios.rollingGet('data',7), x='data', y='obitos',title='Média móvel 7 dias')
-fig.show()
-    
-fig = px.line(obitos_diarios.rollingGet('data',15), x='data', y='obitos',title='Média móvel 15 dias')
-fig.show()
-
-"""# Mortes por faixa etária"""
-
-fig = px.bar(faixa_etaria.get(), x='faixa etaria', y='obitos',title='Mortes por faixa etária')
-
-fig.show()
+st.plotly_chart(fig,use_container_width=True)
 
 obitos_maior = faixa_etaria.findMaxMin('obitos','obitos','max')
 obitos_menor = faixa_etaria.findMaxMin('obitos','obitos','min')
 fx_etaria_maior = faixa_etaria.findMaxMin('obitos','faixa etaria','max')
 fx_etaria_menor = faixa_etaria.findMaxMin('obitos','faixa etaria','min')
 
-print("A faixa etária {} possui a maior quantidade de óbitos, com {} óbitos totais.\nA faixa etária {} possui a menor quantidade de óbitos, com {} óbitos totais.".format(fx_etaria_maior, obitos_maior, fx_etaria_menor, obitos_menor))
+st.write('A faixa etária ',fx_etaria_maior,' possui a maior quantidade de óbitos, com ',obitos_maior,' óbitos totais.\n\nA faixa etária ',fx_etaria_menor,' possui a menor quantidade de óbitos, com ',obitos_menor,' óbitos totais.')
 
-"""# Mortes por 100k"""
 
+st.title('Mapa de óbitos para cada 100 mil habitantes')
 geometria = Geometry()
 
 geometria.get().columns = ['geometry','id','Municipio','description']
 
 geometria.replace(12,'Municipio','Campo Grande')
 geometria.replace(58,'Municipio','Boa Saúde')
-print(geometria.find('description','Cicco'))
-merged = usa.set_index('NM_MUN').join(cemMil.get().set_index('Municipio'))
 
+#merged = outra_geometria().set_index('NM_MUN').join(cemMil.get().set_index('Municipio'))
+merged = geometria.get().set_index('Municipio').join(cemMil.get().set_index('Municipio'))
 
 fig = px.choropleth(merged, geojson=merged.geometry, locations=merged.index, color="Mortes por 100 mil",
                     color_continuous_scale=[[0,'#ffb3b3'],[0.5,'#800000'],[1,'#190000']],
                     )
-#https://www.youtube.com/watch?v=aJmaw3QKMvk ver depois
+
 fig.update_geos(fitbounds="locations", visible=False)
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-fig.show()
+st.plotly_chart(fig,use_container_width=True)
 
-"""# Comentários de lembrete"""
 
+st.title('Médias móveis diárias')
+st.write('A média móvel é uma evolução da média de um dado, em nosso caso, a dos obitos e casos de Covid-19 confirmados em um certo intervalo de tempo')
+option = st.selectbox(
+     'Selecione em quantos dias você deseja ver as médias móveis',
+     ('3 dias', '7 dias', '15 dias'))
+col1, col2 = st.columns(2)
+if option == '3 dias':
+    fig1 = px.line(obitos_diarios.rollingGet('data',3), x='data', y='obitos',title='Obitos confirmados')
+    col1.plotly_chart(fig1, use_container_width=True)
+    fig2 = px.line(casos_diarios.rollingGet('data',3), x='data', y='casos confirmados',title='Casos confirmados')
+    col2.plotly_chart(fig2, use_container_width=True)
+elif option == '7 dias':
+    fig1 = px.line(obitos_diarios.rollingGet('data',7), x='data', y='obitos',title='Obitos confirmados')
+    col1.plotly_chart(fig1, use_container_width=True)
+    fig2 = px.line(casos_diarios.rollingGet('data',7), x='data', y='casos confirmados',title='Casos confirmados')
+    col2.plotly_chart(fig2, use_container_width=True)
+elif option == '15 dias':
+    fig1 = px.line(obitos_diarios.rollingGet('data',15), x='data', y='obitos',title='Obitos confirmados')
+    col1.plotly_chart(fig1, use_container_width=True)
+    fig2 = px.line(casos_diarios.rollingGet('data',15), x='data', y='casos confirmados',title='Casos confirmados')
+    col2.plotly_chart(fig2, use_container_width=True)
+
+st.write('Dados de óbitos obtidos de [lais](https://covid.lais.ufrn.br), dados de população obtidos da [wikipedia](https://pt.wikipedia.org/wiki/Lista_de_munic%C3%ADpios_do_Rio_Grande_do_Norte_por_popula%C3%A7%C3%A3o) e dados do mapa obtido do [github](https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-24-mun.json)')
 #print(obitos_populacao_municipio.loc[obitos_populacao_municipio['Municipio'].str.contains("Goianinha", case=False)])
 #maior_mortes = soma_obitos_municipio.loc[soma_obitos_municipio['obitos'].idxmax(), 'obitos']
 #menor_mortes = soma_obitos_municipio.loc[soma_obitos_municipio['obitos'].idxmin(), 'obitos']
