@@ -9,7 +9,7 @@ Original file is located at
 # Bibliotecas do Projeto
 """
 
-!pip3 install geopandas beautifulsoup4 #urllib3[secure]
+pip3 install geopandas beautifulsoup4 #urllib3[secure]
 import urllib3, urllib.request, json, pandas as pd, geopandas as gpd, plotly.express as px
 from bs4 import BeautifulSoup
 
