@@ -209,7 +209,6 @@ cemMil.sort('Municipio')
 #concatenar a coluna do dataframe obtido pelo webscraping
 cemMil.createColumn('Populacao',populacao.get(),'Populacao')
 cemMil.createColumnMedia('Mortes por 100 mil','obitos',populacao.get(),'Populacao')
-print(cemMil.find('Municipio','caiada'))
 #cemMil.get().head()
 
 st.title('Projeto POO - Covid-19')
@@ -243,6 +242,7 @@ merged = geometria.get().set_index('Municipio').join(cemMil.get().set_index('Mun
 fig = px.choropleth(merged, geojson=merged.geometry, locations=merged.index, color="Mortes por 100 mil",
                     color_continuous_scale=[[0,'#ffb3b3'],[0.5,'#800000'],[1,'#190000']],
                     )
+
 
 fig.update_geos(fitbounds="locations", visible=False)
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
