@@ -20,7 +20,7 @@ obitos_menor = faixa_etaria.findMaxMin('obitos','obitos','min')
 fx_etaria_maior = faixa_etaria.findMaxMin('obitos','faixa etaria','max')
 fx_etaria_menor = faixa_etaria.findMaxMin('obitos','faixa etaria','min')
 
-st.write('A faixa etária ',fx_etaria_maior,' possui a maior quantidade de óbitos, com ',obitos_maior,' óbitos totais.\n\nA faixa etária ',fx_etaria_menor,' possui a menor quantidade de óbitos, com ',obitos_menor,' óbitos totais.')
+st.write('‣ A faixa etária ',fx_etaria_maior,' possui a maior quantidade de óbitos, com ',str(obitos_maior),' óbitos totais.\n\n‣ A faixa etária ',fx_etaria_menor,' possui a menor quantidade de óbitos, com ',str(obitos_menor),' óbitos totais.')
 
 
 #mapa do RN
@@ -28,12 +28,15 @@ st.title('Mapa de óbitos para cada 100 mil habitantes')
 geometria = Geometry()
 
 cemMil = func_mediaCem()
+mun_maior = cemMil.findMaxMin('Mortes por 100 mil','Municipio','max')
+mun_menor = cemMil.findMaxMin('Mortes por 100 mil','Municipio','min')
+mun_maior_num = cemMil.findMaxMin('Mortes por 100 mil','Mortes por 100 mil','max')
+mun_menor_num = cemMil.findMaxMin('Mortes por 100 mil','Mortes por 100 mil','min')
 
 geometria.get().columns = ['geometry','id','Municipio','description']
 
 geometria.replace(12,'Municipio','Campo Grande')
 geometria.replace(58,'Municipio','Boa Saúde')
-
 merged = geometria.get().set_index('Municipio').join(cemMil.get().set_index('Municipio'))
 
 fig = px.choropleth(merged, geojson=merged.geometry, locations=merged.index, color="Mortes por 100 mil",
@@ -44,7 +47,7 @@ fig = px.choropleth(merged, geojson=merged.geometry, locations=merged.index, col
 fig.update_geos(fitbounds="locations", visible=False)
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 st.plotly_chart(fig,use_container_width=True)
-
+st.write('‣',mun_maior,' possui a maior média de óbitos, com ', str(round(mun_maior_num,2)),' mortes a cada 100 mil habitantes.\n\n‣', mun_menor,' possui a menor média de óbitos, com ', str(round(mun_menor_num,2)),' mortes a cada 100 mil habitantes.')
 
 #medias moveis
 st.title('Médias móveis diárias')
