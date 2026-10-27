@@ -1,6 +1,6 @@
 import urllib3, urllib.request, json, pandas as pd, geopandas as gpd
 from bs4 import BeautifulSoup
-
+from io import StringIO
 class Faixa:
     #recebe qual dos dataframes eu desejo escolher e quais as colunas eu quero para poder iniciar o dataframe
     def __init__(self,csv,col1,col2):
@@ -79,19 +79,30 @@ class WebScraping(Media100mil):
     #abre a conexao com a url da pagina
     def __conexao(self):
         self.url = "https://pt.wikipedia.org/wiki/Lista_de_munic%C3%ADpios_do_Rio_Grande_do_Norte_por_popula%C3%A7%C3%A3o"
-        self.conexao = urllib3.PoolManager()
-        self.retorno = self.conexao.request('GET',self.url)
+        self.conexo = urllib3.PoolManager(headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36 Covid19RN-analysis/1.0'})
+        self.retorno = self.conexo.request('GET',self.url)
         self.__transformaPagina()
 
     #cria um dataframe apenas com a tabela dos dados
     def __transformaPagina(self):
         self.pagina = BeautifulSoup(self.retorno.data,'html.parser')
-        #pegando só a tabela
-        self.pagina = self.pagina.findAll('table',class_="wikitable sortable")
-        # Conversão da tabela em uma lista
-        self.pagina = pd.read_html(str(self.pagina))
-        #??
-        self.dataframe = pd.concat(self.pagina)
+        tabelas = self.pagina.findAll('table',class_="wikitable sortable")
+        dataframes = []
+        for tabela in tabelas:
+            for elemento in tabela.findAll():
+                if elemento.has_attr('data-mw'):
+                    del elemento.attrs['data-mw']
+            try:
+                dfs = pd.read_html(StringIO(str(tabela)))
+            except ValueError:
+                continue
+            for df in dfs:
+                colunas = [str(c).strip().lower() for c in df.columns]
+                if any('popula' in c for c in colunas):
+                    df = df[df.iloc[:,0].astype(str).str.strip().str.isdigit()]
+                    df = df.dropna(subset=[df.columns[2]])
+                    dataframes.append(df)
+        self.dataframe = pd.concat(dataframes, ignore_index=True)
 
     #remover valores iguais de uma coluna
     def dropColumnValue(self,column,query):
@@ -107,5 +118,5 @@ class WebScraping(Media100mil):
 
     #remove espaços em branco e converte a população para int
     def rmSpaceInt(self,column):
-        self.dataframe[column] = self.dataframe[column].str.replace("\s+","")
+        self.dataframe[column] = self.dataframe[column].astype(str).str.replace(r"[\s\.]","", regex=True)
         self.dataframe[column] = self.dataframe[column].astype(int)
