@@ -2,7 +2,7 @@
 
 Análise e visualização de dados da COVID-19 no estado do Rio Grande do Norte (Brasil), desenvolvida como projeto da disciplina de Programação Orientada a Objetos.
 
-Demonstração online: https://covid-poo.herokuapp.com/
+Demonstração online: [https://covid-19-ff6ee4e6fa78.herokuapp.com/](https://covid-19-ff6ee4e6fa78.herokuapp.com/)
 
 ## Requisitos
 
